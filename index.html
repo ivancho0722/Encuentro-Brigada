@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHE · SCIH — Brigadas Hospitalarias</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#030609;--s1:#080f1e;--card:#0b1625;--bord:#122035;
+  --text:#cce0ff;--dim:#5a7898;--muted:#2d4560;
+  --blue:#2d8af0;--amber:#f5c400;--red:#e83030;--grn:#17a850;
+  --teal:#06b6d4;--purple:#8b5cf6;--orange:#f97316;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Plus Jakarta Sans','Segoe UI',sans-serif;color:var(--text)}
+
+/* HUD */
+.hud{position:fixed;top:0;left:0;right:0;height:48px;background:rgba(3,6,9,.97);border-bottom:1px solid #0d1e32;display:flex;align-items:center;padding:0 20px;gap:12px;z-index:90}
+.hlogo{width:30px;height:30px;border-radius:6px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.htit{font-family:'JetBrains Mono',monospace;font-size:11px;color:#2d4560;letter-spacing:2px}
+.hsep{width:1px;height:20px;background:#0d1e32}
+.hst{font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--blue)}
+.hr{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tbox{display:flex;align-items:center;gap:8px;background:#080f1e;border:1px solid #0d1e32;border-radius:6px;padding:4px 12px}
+.tlbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:#2d4560;letter-spacing:1px}
+.tval{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--amber);letter-spacing:3px;min-width:56px}
+.tval.warn{color:var(--red);animation:blink .5s steps(1) infinite}
+@keyframes blink{50%{opacity:.15}}
+.hsl{font-family:'JetBrains Mono',monospace;font-size:11px;color:#2d4560}
+.hbtn{padding:5px 12px;border:1px solid #0d1e32;border-radius:5px;background:none;color:#3a5570;cursor:pointer;font-size:11px;font-family:inherit;font-weight:700;transition:.15s}
+.hbtn:hover{color:var(--text);border-color:#2d4560}
+
+/* SBAR */
+.sbar{position:fixed;top:48px;left:0;right:0;height:4px;background:#0a1520;z-index:89;display:flex;gap:1px}
+.sb{flex:1;transition:background .3s}
+.sb.a{background:var(--blue)}.sb.d{background:var(--blue);opacity:.35}
+.sb.a.s2{background:var(--amber)}.sb.d.s2{background:var(--amber);opacity:.35}
+.sb.a.s3{background:var(--red)}.sb.d.s3{background:var(--red);opacity:.35}
+
+/* NAV */
+.nav{position:fixed;top:50%;transform:translateY(-50%);width:42px;height:84px;background:rgba(3,6,9,.85);border:1px solid #0d1e32;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:88;color:#2d4560;font-size:28px;transition:.2s;user-select:none}
+.nav:hover{background:rgba(45,138,240,.1);color:var(--text)}
+.nav:disabled{opacity:.1;pointer-events:none}
+.nprev{left:0;border-left:none;border-radius:0 10px 10px 0}
+.nnext{right:0;border-right:none;border-radius:10px 0 0 10px}
+
+/* SLIDES */
+.slides-wrap{position:fixed;inset:52px 0 0}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;padding:28px 52px;animation:fi .3s ease}
+.slide.on{display:flex}
+@keyframes fi{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+
+/* ROLE SLIDES: no padding, full bleed */
+.slide.role-slide{padding:0}
+
+/* TYPE */
+.tag{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.tag::before{content:'';width:22px;height:2px;background:currentColor;border-radius:1px;display:inline-block}
+.display{font-family:'Bebas Neue',sans-serif;font-size:clamp(60px,9vw,108px);line-height:.88;letter-spacing:2px;color:#fff}
+.display b{color:var(--blue)}
+.h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(42px,6vw,70px);line-height:.9;letter-spacing:1.5px;color:#fff}
+.body-lg{font-size:clamp(18px,1.9vw,22px);color:var(--dim);line-height:1.6}
+.aline{width:48px;height:3px;border-radius:2px;margin:12px 0}
+
+/* CARDS */
+.card{background:#0b1625;border:1px solid #122035;border-radius:14px;padding:22px}
+.bigcard{background:#0b1625;border:1px solid #122035;border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:12px}
+.bigcard-ico{font-size:42px}
+.bigcard-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,3vw,32px);letter-spacing:.5px;color:#fff}
+.bigcard-text{font-size:clamp(16px,1.6vw,19px);color:var(--dim);line-height:1.55}
+
+/* LAYOUTS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:26px;width:100%;max-width:1160px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%}
+.col{display:flex;flex-direction:column;gap:12px}
+
+/* PORTADA */
+.agenda-card{background:#0b1625;border:1px solid #122035;border-radius:12px;padding:18px 22px;display:flex;gap:16px;align-items:flex-start;border-left:4px solid}
+.anum{font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;flex-shrink:0}
+.atime{font-family:'JetBrains Mono',monospace;font-size:10px;color:#2d4560;letter-spacing:1px;margin-bottom:4px}
+.aname{font-size:17px;font-weight:700;color:#fff;margin-bottom:3px}
+.adesc{font-size:14px;color:var(--dim);line-height:1.4}
+.bigbtn{display:inline-flex;align-items:center;gap:8px;padding:15px 34px;border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.5px;cursor:pointer;transition:.2s;color:#fff}
+.bigbtn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+
+/* CHE */
+.trig-item{display:flex;gap:14px;align-items:center;padding:15px 20px;background:#0b1625;border:1px solid #122035;border-radius:11px;border-left:4px solid var(--red)}
+.trig-ico{font-size:28px;flex-shrink:0}
+.trig-txt{font-size:clamp(17px,1.8vw,21px);color:var(--text);font-weight:600;line-height:1.3}
+.vs-col{background:#0b1625;border:1px solid #122035;border-radius:14px;padding:24px}
+.vs-item{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #0d1e32}
+.vs-item:last-child{border-bottom:none}
+.vs-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:7px}
+.vs-txt{font-size:clamp(16px,1.65vw,19px);color:var(--dim);line-height:1.45}
+
+/* ORG */
+.org-node{padding:11px 20px;border-radius:8px;text-align:center;font-weight:700;font-size:clamp(13px,1.4vw,16px);color:#fff;cursor:pointer;transition:.2s}
+.org-node:hover{filter:brightness(1.2);transform:translateY(-1px)}
+.org-lv{width:2px;height:22px;margin:0 auto;background:#0d1e32}
+.org-lh{height:2px;background:#0d1e32;width:84%;margin:0 auto}
+
+/* PRINCIPLES */
+.prc{background:#0b1625;border:1px solid #122035;border-radius:13px;padding:20px;display:flex;flex-direction:column;gap:7px}
+.prc-n{font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:#0d1e32}
+.prc-t{font-family:'Bebas Neue',sans-serif;font-size:clamp(20px,2.5vw,28px);letter-spacing:.5px;color:#fff;line-height:1}
+.prc-txt{font-size:clamp(14px,1.5vw,17px);color:var(--dim);line-height:1.45}
+.prc-ex{font-size:clamp(13px,1.3vw,15px);color:var(--blue);font-style:italic;border-left:2px solid var(--blue);padding-left:8px;margin-top:4px}
+
+/* ── ROLES: FULL BLEED ── */
+.role-wrap{position:absolute;inset:0;display:grid;grid-template-columns:52% 48%}
+.role-visual{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.role-visual::after{content:'';position:absolute;inset:0;background:linear-gradient(140deg,rgba(0,0,0,.38) 0%,rgba(0,0,0,.08) 100%);pointer-events:none}
+.role-content{background:#030609;display:flex;flex-direction:column;justify-content:center;padding:48px 58px;gap:20px;border-left:1px solid rgba(255,255,255,.05)}
+.role-num{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:3px}
+.role-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,72px);line-height:.9;letter-spacing:1px;color:#fff}
+.role-tag{font-size:clamp(16px,1.7vw,20px);line-height:1.4;font-style:italic;opacity:.65}
+.role-div{height:2px;width:48px;border-radius:1px}
+.role-bullets{display:flex;flex-direction:column;gap:14px}
+.role-bullet{display:flex;gap:14px;align-items:flex-start}
+.rb-arr{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;flex-shrink:0;margin-top:1px}
+.rb-txt{font-size:clamp(18px,2vw,23px);color:#deeeff;font-weight:700;line-height:1.2}
+.role-rule{padding:14px 18px;border-radius:8px;border-left:3px solid;font-size:clamp(14px,1.5vw,17px);line-height:1.55;font-style:italic}
+
+/* CASO */
+.caso-wrap{width:100%;max-width:1180px;display:grid;grid-template-columns:1fr 300px;gap:20px}
+.scen-box{border-radius:13px;padding:22px 26px;border:1px solid rgba(232,48,48,.32);background:rgba(232,48,48,.04)}
+.scen-alert{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.adot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:pd 1s infinite}
+@keyframes pd{50%{transform:scale(.5);opacity:.35}}
+.acode{font-family:'Bebas Neue',sans-serif;font-size:clamp(17px,2vw,23px);letter-spacing:2px;color:var(--red)}
+.sit-q{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,3vw,36px);letter-spacing:.5px;color:#fff;line-height:1.15;margin-bottom:8px}
+.sit-ctx{font-size:clamp(15px,1.6vw,18px);color:var(--dim);line-height:1.55}
+.opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.dopt{padding:14px 18px;border-radius:11px;background:rgba(255,255,255,.03);border:1.5px solid #122035;cursor:pointer;font-size:clamp(15px,1.65vw,19px);color:var(--text);text-align:left;transition:.2s;display:flex;gap:12px;align-items:center;width:100%;font-family:inherit;font-weight:700}
+.dopt:hover:not([disabled]){border-color:#3a5570;background:rgba(255,255,255,.06);transform:translateY(-1px)}
+.dopt[disabled]{cursor:default}
+.dopt.ok{background:rgba(23,168,80,.11);border-color:rgba(23,168,80,.45);color:#6ee7a0}
+.dopt.ng{background:rgba(232,48,48,.09);border-color:rgba(232,48,48,.38);color:#fca5a5}
+.dletter{width:36px;height:36px;border-radius:7px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:20px;flex-shrink:0}
+.dfb{display:none;margin-top:14px;font-size:clamp(15px,1.65vw,18px);line-height:1.6;padding:14px 18px;border-radius:9px;border:1px solid}
+.dfb.on{display:block;animation:fi .3s}
+.dfb.ok{background:rgba(23,168,80,.07);border-color:rgba(23,168,80,.28);color:#6ee7a0}
+.dfb.ng{background:rgba(232,48,48,.07);border-color:rgba(232,48,48,.22);color:#fca5a5}
+.dnxt{display:none;margin-top:12px;padding:12px 28px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;cursor:pointer;transition:.2s}
+.dnxt.on{display:inline-block;animation:fi .25s .15s both}
+.dnxt:hover{background:#1a6dd0}
+.score-panel{display:flex;flex-direction:column;gap:10px}
+.score-box{background:#080f1e;border:1px solid #122035;border-radius:11px;padding:18px;text-align:center}
+.score-big{font-family:'Bebas Neue',sans-serif;font-size:68px;color:var(--amber);line-height:1}
+.score-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:#2d4560;letter-spacing:1.5px;margin-top:2px}
+.ms-box{background:#080f1e;border:1px solid #122035;border-radius:11px;padding:14px}
+.ms-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:#2d4560;letter-spacing:1.5px;margin-bottom:10px}
+.ms-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;margin-bottom:3px;border:1px solid transparent;transition:.25s}
+.ms-row.hi{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1)}
+.ms-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ms-name{flex:1;font-size:12px;font-weight:600}
+.ms-tag{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--grn)}
+
+/* CIERRE */
+.recap-row{display:flex;gap:12px;align-items:flex-start;padding:13px 17px;background:#0b1625;border:1px solid #122035;border-radius:10px;margin-bottom:9px}
+.rcheck{font-size:22px;flex-shrink:0}
+.rtxt{font-size:clamp(16px,1.7vw,19px);color:var(--text);line-height:1.4}
+.score-final{background:#080f1e;border:1px solid var(--amber);border-radius:16px;padding:30px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.sf-val{font-family:'Bebas Neue',sans-serif;font-size:88px;color:var(--amber);line-height:1}
+.sf-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:#2d4560;letter-spacing:2px}
+.sf-grade{font-size:clamp(15px,1.6vw,18px);color:var(--dim);max-width:220px;line-height:1.45;text-align:center}
+.rst-btn{padding:12px 28px;background:rgba(45,138,240,.1);color:var(--blue);border:1px solid var(--blue);border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:1px;cursor:pointer;transition:.2s;width:100%;margin-top:6px}
+.rst-btn:hover{background:var(--blue);color:#fff}
+
+/* POPUP */
+.popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#0a1828;border:1px solid #122035;border-radius:16px;padding:26px;max-width:460px;width:90%;z-index:200;box-shadow:0 32px 90px rgba(0,0,0,.85);max-height:84vh;overflow-y:auto}
+.overlay{display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.6);backdrop-filter:blur(5px)}
+
+/* CONFETTI */
+.cnf{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:9999}
+@keyframes cf{to{transform:translateY(120vh) rotate(800deg);opacity:0}}
+.kbd{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:10px;color:#1a3050;letter-spacing:1px;z-index:70;display:flex;gap:14px}
+.kk{background:#080f1e;border:1px solid #0d1e32;border-radius:4px;padding:2px 7px}
+</style>
+</head>
+<body>
+<div class="popup" id="popup"></div>
+<div class="overlay" id="overlay" onclick="closePopup()"></div>
+
+<div class="hud">
+  <div class="hlogo"><svg width="16" height="16" viewBox="0 0 16 16" fill="white"><rect x="6" y="1" width="4" height="14" rx="1.2"/><rect x="1" y="6" width="14" height="4" rx="1.2"/></svg></div>
+  <div class="htit">CHE · SCIH</div>
+  <div class="hsep"></div>
+  <div class="hst" id="hst">BRIGADAS HOSPITALARIAS</div>
+  <div class="hr">
+    <div class="tbox"><div class="tlbl">TIEMPO</div><div class="tval" id="tmr">30:00</div></div>
+    <button class="hbtn" id="tbtn" onclick="toggleTimer()">▶ INICIAR</button>
+    <div class="hsl" id="hsl">0/20</div>
+    <button class="hbtn" onclick="document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()">⛶</button>
+  </div>
+</div>
+<div class="sbar" id="sbar"></div>
+<button class="nav nprev" id="bprev" onclick="go(cur-1)">‹</button>
+<button class="nav nnext" id="bnext" onclick="go(cur+1)">›</button>
+<div class="slides-wrap" id="sw"></div>
+<div class="kbd"><span class="kk">← →</span> navegar <span class="kk">F</span> fullscreen <span class="kk">A B C D</span> responder</div>
+
+<script>
+/* ════════════════════════════════
+   ROLE DATA — minimal bullets
+════════════════════════════════ */
+var ROLES=[
+{key:'cmd',color:'#f5c400',name:'Comandante\nde Incidente',tag:'La máxima autoridad operativa',
+ bullets:['Declara y activa el SCIH','Toma cada decisión estratégica','Único vocero ante autoridades'],
+ rule:'En la emergencia, el Comandante manda más que el director del hospital.'},
+{key:'seg',color:'#e83030',name:'Oficial\nde Seguridad',tag:'Protege al personal en todo momento',
+ bullets:['Monitorea zonas de riesgo','Detiene operaciones inseguras','Define quién entra y con qué EPP'],
+ rule:'Único que puede PARAR sin pedir permiso al Comandante.'},
+{key:'enl',color:'#2d8af0',name:'Oficial\nde Enlace',tag:'Puente oficial con el exterior',
+ bullets:['Recibe cuerpos de socorro','Atiende familiares y medios','Nadie más habla hacia afuera'],
+ rule:'Sin el Oficial de Enlace, nadie en el equipo habla con prensa o familiares.'},
+{key:'ops',color:'#f97316',name:'Jefe de\nOperaciones',tag:'Ejecuta las acciones en campo',
+ bullets:['Dirige brigadas médicas','Gestiona triage y evacuación','Coordina traslados críticos'],
+ rule:'El Comandante decide QUÉ. Operaciones decide CÓMO.'},
+{key:'log',color:'#06b6d4',name:'Jefe de\nLogística',tag:'Asegura que nada falte',
+ bullets:['Gestiona medicamentos y EPP','Coordina transporte y radios','Garantiza relevos del personal'],
+ rule:'Operaciones pide. Logística consigue. Sin excepción.'},
+{key:'pla',color:'#8b5cf6',name:'Jefe de\nPlanificación',tag:'Piensa 4 horas adelante',
+ bullets:['Analiza el estado del incidente','Proyecta recursos y personal','Elabora el Plan de Acción'],
+ rule:'Mientras todos viven el presente, Planificación piensa en el futuro.'},
+{key:'fin',color:'#17a850',name:'Jefe de\nFinanzas',tag:'Registra todo, sin excepción',
+ bullets:['Documenta cada gasto del evento','Registra tiempos del personal','Protege legalmente al hospital'],
+ rule:'Sin registro, no hay recuperación de costos ni protección legal.'}
+];
+
+var RNAMES={cmd:'Comandante de Incidente',seg:'Oficial de Seguridad',enl:'Oficial de Enlace',ops:'Jefe de Operaciones',log:'Jefe de Logística',pla:'Jefe de Planificación',fin:'Jefe de Finanzas'};
+var RICONS={cmd:'⭐',seg:'🛡️',enl:'📡',ops:'⚡',log:'📦',pla:'🧠',fin:'📋'};
+var RCOLORS={cmd:'#f5c400',seg:'#e83030',enl:'#2d8af0',ops:'#f97316',log:'#06b6d4',pla:'#8b5cf6',fin:'#17a850'};
+
+var DECS=[
+{sit:'El detector de humo del piso 3 se activa. El personal reporta humo en el pasillo. ¿Quién DECLARA oficialmente la emergencia?',ctx:'Son las 10:31 AM. Todo el personal espera instrucciones. Nadie sabe si evacuar.',cor:'cmd',opts:['cmd','ops','enl','seg'],why:'Solo el <strong>Comandante de Incidente</strong> puede declarar la emergencia y activar el SCIH. Todo el sistema se pone en marcha con esa única declaración.'},
+{sit:'Una enfermera entra sin EPP al pasillo con humo para buscar a un paciente. ¿Quién actúa de inmediato sin pedir permiso?',ctx:'El humo aumenta. La enfermera ya está en el corredor. El riesgo es inmediato.',cor:'seg',opts:['seg','cmd','ops','enl'],why:'El <strong>Oficial de Seguridad</strong> es el único que puede detener una operación sin autorización previa cuando hay riesgo inmediato para el personal.'},
+{sit:'Familiares se agolpan en la entrada. Una cámara de TV pide declaraciones a un médico. ¿Quién gestiona esta situación?',ctx:'El caos comunicativo puede generar más pánico que el propio incendio.',cor:'enl',opts:['cmd','enl','ops','pla'],why:'El <strong>Oficial de Enlace</strong> es el único vocero autorizado. Ningún médico puede dar información. El Enlace controla la comunicación y evita contradicciones.'},
+{sit:'Hay que trasladar urgente 3 pacientes en ventilación mecánica. El hospital receptor ya confirmó. ¿Quién coordina el traslado?',ctx:'El traslado debe ocurrir en los próximos 15 minutos para garantizar seguridad.',cor:'ops',opts:['log','ops','cmd','fin'],why:'El <strong>Jefe de Operaciones</strong> ejecuta acciones médicas directas: traslados, triage, coordinación de brigadas en campo.'},
+{sit:'Las brigadas reportan que se agotaron los equipos de respiración autónoma (SCBA). ¿Quién lo resuelve?',ctx:'El personal que debe entrar a la zona afectada no tiene el equipo necesario.',cor:'log',opts:['ops','log','pla','cmd'],why:'"Operaciones pide, <strong>Logística</strong> consigue." Ante cualquier faltante de recursos materiales, Logística activa proveedores o almacenes alternos.'},
+{sit:'Llevan 2 horas de operación. ¿Cuánto personal queda disponible y alcanza el oxígeno para 3 horas más?',ctx:'La respuesta define si se piden refuerzos o se puede continuar con el equipo actual.',cor:'pla',opts:['log','fin','pla','cmd'],why:'El <strong>Jefe de Planificación</strong> analiza el estado actual y proyecta necesidades futuras. Cruza datos de Logística y Operaciones.'}
+];
+
+/* ════════════════════════════════
+   SVG ART — 7 ROLE ILLUSTRATIONS
+════════════════════════════════ */
+function svgCmd(){
+ return '<svg viewBox="0 0 500 500" width="80%" height="80%" style="position:relative;z-index:1">'+
+  '<circle cx="250" cy="250" r="210" fill="none" stroke="white" stroke-width="1" opacity=".06"/>'+
+  '<circle cx="250" cy="250" r="165" fill="none" stroke="white" stroke-width="1" opacity=".1"/>'+
+  '<circle cx="250" cy="250" r="122" fill="none" stroke="white" stroke-width="1.5" opacity=".16"/>'+
+  '<line x1="250" y1="250" x2="400" y2="250" stroke="white" stroke-width="3" opacity=".55"/>'+
+  '<line x1="250" y1="250" x2="325" y2="120" stroke="white" stroke-width="3" opacity=".55"/>'+
+  '<line x1="250" y1="250" x2="175" y2="120" stroke="white" stroke-width="3" opacity=".55"/>'+
+  '<line x1="250" y1="250" x2="100" y2="250" stroke="white" stroke-width="3" opacity=".55"/>'+
+  '<line x1="250" y1="250" x2="175" y2="380" stroke="white" stroke-width="3" opacity=".55"/>'+
+  '<line x1="250" y1="250" x2="325" y2="380" stroke="white" stroke-width="3" opacity=".55"/>'+
+  '<circle cx="400" cy="250" r="26" fill="white" opacity=".82"/>'+
+  '<circle cx="325" cy="120" r="26" fill="white" opacity=".82"/>'+
+  '<circle cx="175" cy="120" r="26" fill="white" opacity=".82"/>'+
+  '<circle cx="100" cy="250" r="26" fill="white" opacity=".82"/>'+
+  '<circle cx="175" cy="380" r="26" fill="white" opacity=".82"/>'+
+  '<circle cx="325" cy="380" r="26" fill="white" opacity=".82"/>'+
+  '<circle cx="250" cy="250" r="62" fill="white" opacity=".9"/>'+
+  '<circle cx="250" cy="250" r="44" fill="#f5c400"/>'+
+  '<circle cx="250" cy="250" r="26" fill="white" opacity=".92"/>'+
+  '</svg>';
+}
+
+function svgSeg(){
+ return '<svg viewBox="0 0 500 540" width="75%" height="75%" style="position:relative;z-index:1">'+
+  '<path d="M250 30 L420 105 L420 280 C420 380 340 460 250 510 C160 460 80 380 80 280 L80 105 Z" fill="white" opacity=".08"/>'+
+  '<path d="M250 55 L400 122 L400 278 C400 365 330 438 250 484 C170 438 100 365 100 278 L100 122 Z" fill="none" stroke="white" stroke-width="5" opacity=".7"/>'+
+  '<path d="M250 90 L375 146 L375 276 C375 350 315 413 250 454 C185 413 125 350 125 276 L125 146 Z" fill="white" opacity=".06"/>'+
+  '<polyline points="175,255 222,308 325,192" stroke="white" stroke-width="18" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>'+
+  '</svg>';
+}
+
+function svgEnl(){
+ return '<svg viewBox="0 0 540 400" width="88%" height="88%" style="position:relative;z-index:1">'+
+  '<circle cx="90" cy="200" r="26" fill="white" opacity=".85"/>'+
+  '<circle cx="90" cy="200" r="40" fill="none" stroke="white" stroke-width="2" opacity=".3"/>'+
+  '<path d="M120,200 Q250,110 430,140" stroke="white" stroke-width="3" fill="none" opacity=".6" stroke-dasharray="8,5"/>'+
+  '<path d="M120,200 Q250,200 430,200" stroke="white" stroke-width="4" fill="none" opacity=".8"/>'+
+  '<path d="M120,200 Q250,290 430,260" stroke="white" stroke-width="3" fill="none" opacity=".6" stroke-dasharray="8,5"/>'+
+  '<path d="M100,200 a50,50 0 0,1 0,-50" stroke="white" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>'+
+  '<path d="M100,200 a50,50 0 0,0 0,50" stroke="white" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>'+
+  '<polygon points="420,200 450,185 450,215" fill="white" opacity=".7"/>'+
+  '<circle cx="460" cy="200" r="30" fill="white" opacity=".85"/>'+
+  '<circle cx="460" cy="200" r="46" fill="none" stroke="white" stroke-width="2" opacity=".3"/>'+
+  '</svg>';
+}
+
+function svgOps(){
+ return '<svg viewBox="0 0 460 500" width="75%" height="75%" style="position:relative;z-index:1">'+
+  '<polygon points="260,30 310,200 240,200 290,470 200,230 270,230 210,30" fill="white" opacity=".85"/>'+
+  '<line x1="80" y1="100" x2="180" y2="130" stroke="white" stroke-width="3" opacity=".35" stroke-linecap="round"/>'+
+  '<line x1="60" y1="200" x2="170" y2="200" stroke="white" stroke-width="3" opacity=".3" stroke-linecap="round"/>'+
+  '<line x1="80" y1="300" x2="180" y2="270" stroke="white" stroke-width="3" opacity=".35" stroke-linecap="round"/>'+
+  '<circle cx="250" cy="250" r="200" fill="none" stroke="white" stroke-width="1" opacity=".06"/>'+
+  '</svg>';
+}
+
+function svgLog(){
+ return '<svg viewBox="0 0 540 380" width="86%" height="86%" style="position:relative;z-index:1">'+
+  '<rect x="30" y="140" width="120" height="100" rx="10" fill="white" opacity=".12" stroke="white" stroke-width="3" opacity_stroke=".7"/>'+
+  '<rect x="30" y="140" width="120" height="100" rx="10" fill="none" stroke="white" stroke-width="3" opacity=".7"/>'+
+  '<rect x="210" y="120" width="130" height="140" rx="10" fill="white" opacity=".2" stroke="white" stroke-width="4" />'+
+  '<rect x="210" y="120" width="130" height="140" rx="10" fill="none" stroke="white" stroke-width="4" opacity=".9"/>'+
+  '<rect x="400" y="140" width="115" height="100" rx="10" fill="none" stroke="white" stroke-width="3" opacity=".7"/>'+
+  '<rect x="400" y="140" width="115" height="100" rx="10" fill="white" opacity=".12"/>'+
+  '<line x1="150" y1="190" x2="210" y2="190" stroke="white" stroke-width="3" opacity=".7"/>'+
+  '<polygon points="200,182 218,190 200,198" fill="white" opacity=".7"/>'+
+  '<line x1="340" y1="190" x2="400" y2="190" stroke="white" stroke-width="3" opacity=".7"/>'+
+  '<polygon points="390,182 408,190 390,198" fill="white" opacity=".7"/>'+
+  '<line x1="275" y1="50" x2="275" y2="120" stroke="white" stroke-width="2" opacity=".4" stroke-dasharray="6,4"/>'+
+  '<line x1="275" y1="260" x2="275" y2="340" stroke="white" stroke-width="2" opacity=".4" stroke-dasharray="6,4"/>'+
+  '<circle cx="275" cy="38" r="18" fill="white" opacity=".6"/>'+
+  '<circle cx="275" cy="352" r="18" fill="white" opacity=".6"/>'+
+  '</svg>';
+}
+
+function svgPla(){
+ return '<svg viewBox="0 0 540 420" width="86%" height="86%" style="position:relative;z-index:1">'+
+  '<line x1="50" y1="210" x2="230" y2="210" stroke="white" stroke-width="5" opacity=".8" stroke-linecap="round"/>'+
+  '<circle cx="50" cy="210" r="18" fill="white" opacity=".85"/>'+
+  '<circle cx="220" cy="210" r="14" fill="white" opacity=".7"/>'+
+  '<line x1="230" y1="210" x2="350" y2="120" stroke="white" stroke-width="4" opacity=".75" stroke-linecap="round"/>'+
+  '<line x1="230" y1="210" x2="350" y2="210" stroke="white" stroke-width="4" opacity=".75" stroke-linecap="round"/>'+
+  '<line x1="230" y1="210" x2="350" y2="300" stroke="white" stroke-width="4" opacity=".75" stroke-linecap="round"/>'+
+  '<line x1="350" y1="120" x2="490" y2="80" stroke="white" stroke-width="3.5" opacity=".7" stroke-linecap="round"/>'+
+  '<line x1="350" y1="210" x2="490" y2="210" stroke="white" stroke-width="3.5" opacity=".7" stroke-linecap="round"/>'+
+  '<line x1="350" y1="300" x2="490" y2="340" stroke="white" stroke-width="3.5" opacity=".7" stroke-linecap="round"/>'+
+  '<circle cx="490" cy="80" r="20" fill="white" opacity=".85"/>'+
+  '<circle cx="490" cy="210" r="24" fill="white" opacity=".95"/>'+
+  '<circle cx="490" cy="340" r="20" fill="white" opacity=".75"/>'+
+  '<circle cx="350" cy="120" r="12" fill="white" opacity=".6"/>'+
+  '<circle cx="350" cy="210" r="12" fill="white" opacity=".6"/>'+
+  '<circle cx="350" cy="300" r="12" fill="white" opacity=".6"/>'+
+  '</svg>';
+}
+
+function svgFin(){
+ return '<svg viewBox="0 0 400 500" width="72%" height="72%" style="position:relative;z-index:1">'+
+  '<rect x="80" y="60" width="260" height="360" rx="14" fill="none" stroke="white" stroke-width="4" opacity=".75"/>'+
+  '<rect x="80" y="60" width="260" height="360" rx="14" fill="white" opacity=".07"/>'+
+  '<rect x="155" y="30" width="110" height="46" rx="8" fill="white" opacity=".7"/>'+
+  '<rect x="155" y="30" width="110" height="46" rx="8" fill="none" stroke="white" stroke-width="3" opacity=".9"/>'+
+  '<line x1="120" y1="165" x2="300" y2="165" stroke="white" stroke-width="3" opacity=".6" stroke-linecap="round"/>'+
+  '<line x1="120" y1="220" x2="300" y2="220" stroke="white" stroke-width="3" opacity=".6" stroke-linecap="round"/>'+
+  '<line x1="120" y1="275" x2="280" y2="275" stroke="white" stroke-width="3" opacity=".5" stroke-linecap="round"/>'+
+  '<line x1="120" y1="330" x2="260" y2="330" stroke="white" stroke-width="3" opacity=".4" stroke-linecap="round"/>'+
+  '<polyline points="108,210 128,238 175,185" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>'+
+  '</svg>';
+}
+
+var SVG_FNS=[svgCmd,svgSeg,svgEnl,svgOps,svgLog,svgPla,svgFin];
+
+/* ════════════════════════════════
+   BUILD SLIDES
+════════════════════════════════ */
+var TOTAL=21;
+var cur=0;
+var timerOn=false,timerInt=null,secs=1800;
+var caseScore=0,decDone={};
+
+function buildSlides(){
+  var sw=document.getElementById('sw');
+  var h='';
+
+  /* 0: PORTADA */
+  h+=sl(0,'on','',
+    '<div class="g2" style="align-items:center;max-width:1140px">'+
+    '<div class="col">'+
+    '<div class="tag" style="color:#2d4560">BRIGADAS HOSPITALARIAS · 30 MINUTOS</div>'+
+    '<div class="display">COMITÉ<br><b>HOSPITALARIO</b><br>DE EMERGENCIAS</div>'+
+    '<div class="aline" style="background:var(--blue)"></div>'+
+    '<div class="body-lg" style="max-width:460px">Sistema Comando de Incidentes — estructura, roles y caso práctico con puntaje en tiempo real.</div>'+
+    '<button class="bigbtn" style="background:var(--blue);margin-top:8px" onclick="startTimer();go(1)">COMENZAR ›</button>'+
+    '</div>'+
+    '<div class="col">'+
+    agCard('01','var(--blue)','ESTACIÓN 1 · 5 MIN','¿Qué es el CHE?','Definición, activación, estructura y diferencia con el SCIH')+
+    agCard('02','var(--amber)','ESTACIÓN 2 · 10 MIN','Sistema Comando de Incidentes','7 roles con funciones clave, organigrama y regla de oro')+
+    agCard('03','var(--red)','ESTACIÓN 3 · 15 MIN','Caso Práctico: Incendio UCI','6 decisiones de comando en tiempo real con puntaje grupal')+
+    '</div></div>');
+
+  /* 1: CHE QUÉ ES */
+  h+=sl(1,'','',
+    '<div style="width:100%;max-width:1140px">'+
+    '<div class="tag" style="color:var(--blue)">ESTACIÓN 1 — EL CHE</div>'+
+    '<div class="h2" style="margin-bottom:18px">Comité Hospitalario<br>de Emergencias</div>'+
+    '<div class="g3" style="margin-bottom:18px">'+
+    bcard('📋','var(--blue)','PLANIFICA','Diseña planes, protocolos y capacita brigadas antes de que ocurra la emergencia.')+
+    bcard('🔗','var(--grn)','COORDINA','Activa el SCIH y organiza todos los recursos del hospital bajo una estructura clara.')+
+    bcard('🚨','var(--red)','ACTIVA','Cuando se supera la capacidad normal, declara la emergencia y pone en marcha el SCIH.')+
+    '</div>'+
+    '<div class="card" style="background:rgba(45,138,240,.06);border-color:rgba(45,138,240,.25);padding:18px 24px">'+
+    '<div style="font-size:clamp(16px,1.8vw,20px);color:var(--text);line-height:1.6">💡 <strong style="color:#fff">Clave:</strong> El CHE existe <em>antes y después</em> del incidente. El SCIH se activa <em>durante</em>. El CHE define el plan — el SCIH lo ejecuta.</div>'+
+    '</div></div>');
+
+  /* 2: CUÁNDO SE ACTIVA */
+  h+=sl(2,'','',
+    '<div style="width:100%;max-width:1140px">'+
+    '<div class="tag" style="color:var(--blue)">ESTACIÓN 1 — ACTIVACIÓN</div>'+
+    '<div class="h2" style="margin-bottom:20px">¿Cuándo se Activa?</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">'+
+    trig('🏥','Incidente supera la capacidad normal del hospital')+
+    trig('👥','Masificación de víctimas — más de 10 pacientes simultáneos')+
+    trig('🔥','Amenaza interna: incendio, colapso, derrame HAZMAT')+
+    trig('🌍','Amenaza externa: sismo, pandemia, evento de seguridad')+
+    trig('📢','Declaración de emergencia por autoridad sanitaria')+
+    trig('📋','Orden del Director del hospital o Secretaría de Salud')+
+    '</div>'+
+    '<div class="card" style="margin-top:16px;padding:16px 22px;background:rgba(232,48,48,.05);border-color:rgba(232,48,48,.22)">'+
+    '<div style="font-size:clamp(16px,1.8vw,20px);color:var(--text);line-height:1.55">🛑 <strong style="color:#fff">Regla:</strong> El CHE no improvisa en la crisis. Activa protocolos ya definidos. Sin plan previo, no hay respuesta organizada.</div>'+
+    '</div></div>');
+
+  /* 3: CHE ESTRUCTURA */
+  h+=sl(3,'','align-items:center',
+    '<div style="width:100%;max-width:1080px">'+
+    '<div class="tag" style="color:var(--blue);margin-bottom:14px">ESTACIÓN 1 — ESTRUCTURA</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">'+
+    '<div class="vs-col" style="border-top:3px solid var(--blue)">'+
+    '<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--blue);letter-spacing:2px;margin-bottom:6px">MODO COTIDIANO</div>'+
+    '<div class="h2" style="color:var(--blue);font-size:clamp(34px,4.5vw,54px);margin-bottom:10px">CHE</div>'+
+    vsI(RCOLORS.cmd,'Planeación, protocolos y planes vigentes')+vsI(RCOLORS.cmd,'Capacitación y simulacros periódicos')+vsI(RCOLORS.cmd,'Articulación con redes de urgencias')+
+    '</div>'+
+    '<div class="vs-col" style="border-top:3px solid var(--amber)">'+
+    '<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--amber);letter-spacing:2px;margin-bottom:6px">MODO EMERGENCIA</div>'+
+    '<div class="h2" style="color:var(--amber);font-size:clamp(34px,4.5vw,54px);margin-bottom:10px">SCIH</div>'+
+    vsI('#f5c400','Comandante activo con autoridad máxima')+vsI('#f5c400','7 roles activados según magnitud')+vsI('#f5c400','Plan de Acción con objetivos medibles')+
+    '</div></div>'+
+    '<div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">'+
+    oNode(var_('#1a6dd0'),'DIRECTOR','Preside el CHE')+arr()+
+    oNode(RCOLORS.cmd,'⭐ COMANDANTE','activa el SCIH')+arr()+
+    '<div style="display:flex;gap:8px">'+
+    oNode(RCOLORS.ops,'⚡ OPS','')+oNode(RCOLORS.log,'📦 LOG','')+oNode(RCOLORS.pla,'🧠 PLAN','')+
+    '</div></div></div>');
+
+  /* 4: PRINCIPIOS */
+  h+=sl(4,'','',
+    '<div style="width:100%;max-width:1140px">'+
+    '<div class="tag" style="color:var(--amber)">ESTACIÓN 2 — 5 PRINCIPIOS DEL SCIH</div>'+
+    '<div class="h2" style="margin-bottom:16px">Sistema Comando<br>de Incidentes</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:11px">'+
+    prc('01','Unidad de Mando','Cada persona responde a UN solo superior.','Nunca dos jefes al mismo tiempo.')+
+    prc('02','Amplitud de Control','Máximo 5–7 personas por jefe.','Más = crear subsecciones.')+
+    prc('03','Modularidad','Solo se activa lo necesario.','Crisis menor = 2 o 3 roles.')+
+    prc('04','Terminología Común','Todos hablan el mismo idioma.','Zona caliente = lo mismo para todos.')+
+    prc('05','Objetivos','Metas escritas y medibles.','"Evacuar piso 4 en 20 min."')+
+    '</div>'+
+    '<div class="card" style="margin-top:13px;padding:16px 22px;background:rgba(245,196,0,.05);border-color:rgba(245,196,0,.2)">'+
+    '<div style="font-size:clamp(16px,1.8vw,20px);color:var(--text);line-height:1.5">📌 <strong style="color:#fff">¿Por qué?</strong> Sin estructura clara, cada persona actúa por su cuenta. Los recursos se duplican o faltan. La información es caótica. El SCIH elimina ese caos.</div>'+
+    '</div></div>');
+
+  /* 5: ORGANIGRAMA */
+  h+=sl(5,'','align-items:center',
+    '<div style="width:100%;max-width:1100px">'+
+    '<div class="tag" style="color:var(--amber);margin-bottom:16px">ESTACIÓN 2 — ORGANIGRAMA SCIH — TOCA CADA CARGO</div>'+
+    '<div style="display:flex;flex-direction:column;align-items:center">'+
+    '<div class="org-node" style="background:rgba(245,196,0,.09);border:2px solid '+RCOLORS.cmd+';color:'+RCOLORS.cmd+';min-width:300px;padding:15px 28px;font-size:18px;cursor:pointer" onclick="openPopup(\'cmd\')">⭐ COMANDANTE DE INCIDENTE<div style="font-size:11px;opacity:.6;font-family:\'JetBrains Mono\',monospace;margin-top:3px">Máxima autoridad · Activa el SCIH</div></div>'+
+    '<div style="display:flex;justify-content:center;gap:50px;margin:14px 0 0">'+
+    '<div style="text-align:center"><div class="org-lv"></div><div class="org-node" style="background:rgba(232,48,48,.1);border:1px solid rgba(232,48,48,.4);color:'+RCOLORS.seg+';font-size:14px;cursor:pointer" onclick="openPopup(\'seg\')">🛡 Oficial de Seguridad</div></div>'+
+    '<div style="text-align:center"><div class="org-lv"></div><div class="org-node" style="background:rgba(45,138,240,.1);border:1px solid rgba(45,138,240,.4);color:'+RCOLORS.enl+';font-size:14px;cursor:pointer" onclick="openPopup(\'enl\')">📡 Oficial de Enlace</div></div>'+
+    '</div>'+
+    '<div class="org-lv" style="height:18px"></div>'+
+    '<div class="org-lh"></div>'+
+    '<div class="org-lv" style="height:12px"></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%">'+
+    secC('ops',RCOLORS.ops,'⚡','OPERACIONES','Acciones en campo',['Brigadas médicas','Triage START','Evacuación','Traslados'])+
+    secC('log',RCOLORS.log,'📦','LOGÍSTICA','Recursos y suministros',['Medicamentos','Equipos EPP','Transporte','Personal'])+
+    secC('pla',RCOLORS.pla,'🧠','PLANIFICACIÓN','Información y proyección',['Plan de acción','Estado recursos','Proyección 4h','Documentación'])+
+    secC('fin',RCOLORS.fin,'📋','FINANZAS','Registro y costos',['Gastos del evento','Contratos','Personal','Informe final'])+
+    '</div></div></div>');
+
+  /* 6–12: ROLES */
+  for(var ri=0;ri<7;ri++){
+    h+=mkRoleSlide(ROLES[ri],ri);
+  }
+
+  /* 13: CASO INTRO */
+  h+=sl(13,'','',
+    '<div style="width:100%;max-width:1060px">'+
+    '<div class="tag" style="color:var(--red)">ESTACIÓN 3 — CASO PRÁCTICO</div>'+
+    '<div class="display" style="font-size:clamp(52px,8vw,96px);margin-bottom:18px">Incendio<br><span style="color:var(--red)">en UCI</span></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">'+
+    infoC('🏥','EL ESCENARIO','10:30 AM. UCI piso 3 — humo visible. 8 pacientes, 3 en ventilación mecánica. El detector acaba de activarse.')+
+    infoC('🎯','TU MISIÓN','6 decisiones de comando: asigna cada situación al rol correcto. Debate en grupo, un vocero responde.')+
+    infoC('🏆','PUNTUACIÓN','10 pts por correcta. Máximo 60 pts. Explicación inmediata después de cada decisión.')+
+    '</div>'+
+    '<button class="bigbtn" style="background:var(--red)" onclick="go(14)">ACTIVAR EMERGENCIA ›</button>'+
+    '</div>');
+
+  /* 14–19: DECISIONES */
+  for(var di=0;di<6;di++){
+    h+=mkDecSlide(di);
+  }
+
+  /* 20: CIERRE */
+  h+=sl(20,'','align-items:center',
+    '<div class="g2" style="align-items:center;max-width:1080px">'+
+    '<div>'+
+    '<div class="tag" style="color:var(--grn);margin-bottom:10px">CIERRE — RESUMEN</div>'+
+    '<div class="h2" style="margin-bottom:18px">Lo que<br>aprendimos hoy</div>'+
+    '<div class="recap-row"><div class="rcheck">✅</div><div class="rtxt">El <strong>CHE</strong> planifica en calma para que en la crisis haya un plan, no improvisación</div></div>'+
+    '<div class="recap-row"><div class="rcheck">✅</div><div class="rtxt">El <strong>SCIH</strong> define quién manda, quién ejecuta y quién apoya — sin confusión</div></div>'+
+    '<div class="recap-row"><div class="rcheck">✅</div><div class="rtxt"><strong>7 roles</strong> con funciones concretas que se activan según la magnitud del evento</div></div>'+
+    '<div class="recap-row"><div class="rcheck">✅</div><div class="rtxt">El <strong>Comandante</strong> tiene máxima autoridad operativa por encima del director médico</div></div>'+
+    '<div class="recap-row"><div class="rcheck">✅</div><div class="rtxt">Cada brigada sabe a quién reportar, qué hacer y qué <em>no</em> hacer en su zona</div></div>'+
+    '</div>'+
+    '<div class="col">'+
+    '<div class="score-final">'+
+    '<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#2d4560;letter-spacing:2px">PUNTUACIÓN FINAL DEL GRUPO</div>'+
+    '<div class="sf-val" id="sfval">0</div>'+
+    '<div class="sf-lbl">PUNTOS DE 60</div>'+
+    '<div class="sf-grade" id="sfgrade">Completa el caso práctico</div>'+
+    '</div>'+
+    '<button class="rst-btn" onclick="resetAll();go(0)">↩ REINICIAR</button>'+
+    '</div></div>');
+
+  sw.innerHTML=h;
+}
+
+/* ════════════════════════════════
+   ROLE SLIDES — FULL BLEED
+════════════════════════════════ */
+function mkRoleSlide(r,idx){
+  var art=SVG_FNS[idx]();
+  var nameLines=r.name.split('\n');
+  var nameHtml=nameLines.map(function(l){return l;}).join('<br>');
+  var bullHtml=r.bullets.map(function(b){
+    return '<div class="role-bullet">'+
+      '<span class="rb-arr" style="color:'+r.color+'">→</span>'+
+      '<span class="rb-txt">'+b+'</span>'+
+      '</div>';
+  }).join('');
+  return '<div class="slide role-slide" id="sl'+(6+idx)+'">'+
+    '<div class="role-wrap">'+
+    '<div class="role-visual" style="background:'+r.color+'">'+
+    '<div style="position:absolute;inset:0;background:linear-gradient(145deg,rgba(0,0,0,.42) 0%,rgba(0,0,0,.05) 100%)"></div>'+
+    art+
+    '</div>'+
+    '<div class="role-content">'+
+    '<div class="role-num" style="color:'+r.color+'">ROL '+(idx+1)+' DE 7</div>'+
+    '<div class="role-name" style="color:'+r.color+'">'+nameHtml+'</div>'+
+    '<div class="role-tag" style="color:rgba(180,210,255,.6)">'+r.tag+'</div>'+
+    '<div class="role-div" style="background:'+r.color+'"></div>'+
+    '<div class="role-bullets">'+bullHtml+'</div>'+
+    '<div class="role-rule" style="border-left-color:'+r.color+';background:'+r.color+'0c;color:'+r.color+'c0">'+r.rule+'</div>'+
+    '</div>'+
+    '</div></div>';
+}
+
+/* ════════════════════════════════
+   DECISION SLIDES
+════════════════════════════════ */
+function mkDecSlide(d){
+  var dec=DECS[d];var sid=14+d;
+  var L=['A','B','C','D'];
+  var opts=dec.opts.map(function(k,i){
+    return '<button class="dopt" id="dopt'+d+'_'+k+'" onclick="answerDec('+d+',\''+k+'\')">'+
+      '<span class="dletter">'+L[i]+'</span>'+
+      '<span>'+RICONS[k]+' '+RNAMES[k]+'</span>'+
+      '</button>';
+  }).join('');
+  var moRows=['cmd','seg','enl','ops','log','pla','fin'].map(function(k){
+    var hi=k===dec.cor;
+    return '<div class="ms-row'+(hi?' hi':'')+'" id="ms'+d+'_'+k+'">'+
+      '<div class="ms-dot" style="background:'+RCOLORS[k]+(hi?'':'55')+'"></div>'+
+      '<div class="ms-name" style="color:'+(hi?'#fff':'var(--muted)')+'">'+RICONS[k]+' '+RNAMES[k]+'</div>'+
+      (hi?'<div class="ms-tag">ACTIVO</div>':'')+
+      '</div>';
+  }).join('');
+  var nxtA=d<5?'go('+(sid+1)+')':'finishCase();go(20)';
+  var nxtL=d<5?'Siguiente decisión ›':'Ver resultados ›';
+  return sl(sid,'','',
+    '<div class="caso-wrap">'+
+    '<div class="col">'+
+    '<div class="scen-box">'+
+    '<div class="scen-alert"><div class="adot"></div><div class="acode">CÓDIGO ROJO · INCENDIO UCI · DECISIÓN '+(d+1)+'/6</div></div>'+
+    '<div class="sit-q">'+dec.sit+'</div>'+
+    '<div class="sit-ctx">'+dec.ctx+'</div>'+
+    '</div>'+
+    '<div class="card">'+
+    '<div style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#2d4560;letter-spacing:1.5px;margin-bottom:12px">¿QUÉ ROL ACTÚA AQUÍ? · Teclas A B C D</div>'+
+    '<div class="opts-grid" id="dopts'+d+'">'+opts+'</div>'+
+    '<div class="dfb" id="dfb'+d+'"></div>'+
+    '<button class="dnxt" id="dnxt'+d+'" onclick="'+nxtA+'">'+nxtL+'</button>'+
+    '</div></div>'+
+    '<div class="score-panel">'+
+    '<div class="score-box">'+
+    '<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#2d4560;letter-spacing:1px;margin-bottom:4px">PUNTOS DEL GRUPO</div>'+
+    '<div class="score-big" id="ds'+d+'">0</div>'+
+    '<div class="score-lbl">'+(d+1)+'/6 DECISIONES</div>'+
+    '</div>'+
+    '<div class="ms-box"><div class="ms-lbl">SCIH ACTIVO</div>'+moRows+'</div>'+
+    '</div></div>');
+}
+
+/* ════════════════════════════════
+   HTML HELPERS
+════════════════════════════════ */
+function sl(id,on,style,inner){return'<div class="slide'+(on?' on':'')+'" id="sl'+id+'"'+(style?' style="'+style+'"':'')+'>'+inner+'</div>';}
+function agCard(n,c,t,name,desc){return'<div class="agenda-card" style="border-left-color:'+c+'"><div class="anum" style="color:'+c+'">'+n+'</div><div><div class="atime">'+t+'</div><div class="aname">'+name+'</div><div class="adesc">'+desc+'</div></div></div>';}
+function bcard(ico,c,tit,txt){return'<div class="bigcard" style="border-top:3px solid '+c+'"><div class="bigcard-ico">'+ico+'</div><div class="bigcard-title">'+tit+'</div><div class="bigcard-text">'+txt+'</div></div>';}
+function trig(ico,txt){return'<div class="trig-item"><div class="trig-ico">'+ico+'</div><div class="trig-txt">'+txt+'</div></div>';}
+function vsI(c,t){return'<div class="vs-item"><div class="vs-dot" style="background:'+c+'"></div><div class="vs-txt">'+t+'</div></div>';}
+function oNode(c,lbl,sub){return'<div class="org-node" style="background:'+c+'15;border:1px solid '+c+'45;color:'+c+'">'+lbl+(sub?'<div style="font-size:10px;opacity:.6;font-family:\'JetBrains Mono\',monospace;margin-top:2px">'+sub+'</div>':'')+'</div>';}
+function arr(){return'<span style="font-size:22px;color:#2d4560">→</span>';}
+function var_(c){return c;}
+function prc(n,t,txt,ex){return'<div class="prc" style="border-top:3px solid var(--amber)"><div class="prc-n">'+n+'</div><div class="prc-t" style="color:var(--amber)">'+t+'</div><div class="prc-txt">'+txt+'</div><div class="prc-ex">'+ex+'</div></div>';}
+function secC(key,c,ico,t,sub,roles){return'<div class="prc" style="background:'+c+'0d;border:1px solid '+c+'28;cursor:pointer" onclick="openPopup(\''+key+'\')">'+'<div style="font-size:26px">'+ico+'</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;letter-spacing:.5px;color:'+c+';margin:4px 0">'+t+'</div><div style="font-size:12px;color:'+c+'77;margin-bottom:7px">'+sub+'</div>'+roles.map(function(r){return'<div style="font-size:12px;padding:3px 0;color:#3a5570;border-bottom:1px solid #0d1e32">'+r+'</div>';}).join('')+'</div>';}
+function infoC(ico,tit,txt){return'<div class="card" style="padding:22px"><div style="font-size:32px;margin-bottom:8px">'+ico+'</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#2d4560;letter-spacing:1.5px;margin-bottom:8px">'+tit+'</div><div style="font-size:clamp(16px,1.7vw,19px);color:var(--text);line-height:1.55">'+txt+'</div></div>';}
+
+/* ════════════════════════════════
+   POPUP
+════════════════════════════════ */
+function openPopup(key){
+  var r=null;for(var i=0;i<ROLES.length;i++){if(ROLES[i].key===key){r=ROLES[i];break;}}
+  if(!r)return;
+  // also check role map
+  var rdata={cmd:ROLES[0],seg:ROLES[1],enl:ROLES[2],ops:ROLES[3],log:ROLES[4],pla:ROLES[5],fin:ROLES[6]};
+  r=rdata[key]||r;
+  var bhtml=r.bullets.map(function(b){return'<div style="display:flex;gap:10px;margin-bottom:10px"><span style="color:'+r.color+'">›</span><span style="font-size:17px;color:#fff;font-weight:700">'+b+'</span></div>';}).join('');
+  document.getElementById('popup').innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">'+
+    '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:'+r.color+'">'+RNAMES[key]+'</div>'+
+    '<button onclick="closePopup()" style="background:none;border:none;color:#2d4560;cursor:pointer;font-size:26px;line-height:1;padding:0">×</button>'+
+    '</div>'+
+    '<div style="font-size:15px;color:#5a7898;margin-bottom:16px;font-style:italic;line-height:1.5">'+r.tag+'</div>'+
+    bhtml+
+    '<div style="padding:12px 14px;background:'+r.color+'0e;border-radius:7px;border-left:3px solid '+r.color+';font-size:15px;color:'+r.color+'b8;line-height:1.55;font-style:italic;margin-top:4px">'+r.rule+'</div>';
+  document.getElementById('popup').style.display='block';
+  document.getElementById('overlay').style.display='block';
+}
+function closePopup(){document.getElementById('popup').style.display='none';document.getElementById('overlay').style.display='none';}
+
+/* ════════════════════════════════
+   NAV
+════════════════════════════════ */
+var stMap={0:'PORTADA',1:'E1 — ¿QUÉ ES EL CHE?',2:'E1 — ACTIVACIÓN',3:'E1 — ESTRUCTURA',4:'E2 — PRINCIPIOS SCIH',5:'E2 — ORGANIGRAMA',6:'E2 — COMANDANTE',7:'E2 — SEGURIDAD',8:'E2 — ENLACE',9:'E2 — OPERACIONES',10:'E2 — LOGÍSTICA',11:'E2 — PLANIFICACIÓN',12:'E2 — FINANZAS',13:'E3 — INTRODUCCIÓN',14:'E3 — DECISIÓN 1/6',15:'E3 — DECISIÓN 2/6',16:'E3 — DECISIÓN 3/6',17:'E3 — DECISIÓN 4/6',18:'E3 — DECISIÓN 5/6',19:'E3 — DECISIÓN 6/6',20:'CIERRE'};
+var stC={0:null,1:'blue',2:'blue',3:'blue',4:'amber',5:'amber',6:'amber',7:'amber',8:'amber',9:'amber',10:'amber',11:'amber',12:'amber',13:'red',14:'red',15:'red',16:'red',17:'red',18:'red',19:'red',20:'grn'};
+
+function go(n){
+  if(n<0||n>=TOTAL)return;
+  var p=document.getElementById('sl'+cur);if(p)p.classList.remove('on');
+  cur=n;
+  var nx=document.getElementById('sl'+cur);if(nx){nx.classList.remove('on');void nx.offsetWidth;nx.classList.add('on');}
+  updateHUD();
+}
+function updateHUD(){
+  var el=document.getElementById('hst');
+  el.textContent=stMap[cur]||'';
+  var c=stC[cur];
+  el.style.color=c?'var(--'+c+')':'var(--blue)';
+  document.getElementById('hsl').textContent=cur+'/'+(TOTAL-1);
+  document.getElementById('bprev').disabled=cur===0;
+  document.getElementById('bnext').disabled=cur>=TOTAL-1;
+  buildSbar();
+}
+function buildSbar(){
+  var sb=document.getElementById('sbar'),h='';
+  for(var i=0;i<TOTAL;i++){
+    var cls='sb';
+    if(i>=13&&i<=19)cls+=' s3';
+    else if(i>=4)cls+=' s2';
+    if(i===cur)cls+=' a';else if(i<cur)cls+=' d';
+    h+='<div class="'+cls+'"></div>';
+  }
+  sb.innerHTML=h;
+}
+
+/* ════════════════════════════════
+   TIMER
+════════════════════════════════ */
+function startTimer(){if(timerOn)return;timerOn=true;document.getElementById('tbtn').textContent='⏸ PAUSAR';timerInt=setInterval(function(){if(secs<=0){clearInterval(timerInt);return;}secs--;var m=Math.floor(secs/60),sv=secs%60,el=document.getElementById('tmr');el.textContent=(m<10?'0':'')+m+':'+(sv<10?'0':'')+sv;el.className='tval'+(secs<=180?' warn':'');},1000);}
+function toggleTimer(){if(timerOn){clearInterval(timerInt);timerOn=false;document.getElementById('tbtn').textContent='▶ REANUDAR';}else startTimer();}
+
+/* ════════════════════════════════
+   ANSWERS
+════════════════════════════════ */
+function answerDec(d,chosen){
+  if(decDone[d])return;decDone[d]=true;
+  var dec=DECS[d],isOk=chosen===dec.cor;
+  dec.opts.forEach(function(k){var b=document.getElementById('dopt'+d+'_'+k);if(b){b.disabled=true;if(k===dec.cor)b.classList.add('ok');else if(k===chosen)b.classList.add('ng');}});
+  var fb=document.getElementById('dfb'+d);
+  fb.className='dfb on '+(isOk?'ok':'ng');
+  fb.innerHTML=(isOk?'✓ Correcto. ':'✗ Incorrecto. ')+dec.why;
+  if(isOk){caseScore+=10;confetti();}
+  var sv=document.getElementById('ds'+d);if(sv)sv.textContent=caseScore;
+  var nxt=document.getElementById('dnxt'+d);if(nxt)nxt.classList.add('on');
+}
+function finishCase(){
+  var el=document.getElementById('sfval');if(el)el.textContent=caseScore;
+  var g=document.getElementById('sfgrade');if(g){var p=Math.round(caseScore/60*100);g.textContent=p>=90?'¡Excelente! Dominan el SCIH.':p>=70?'Muy bien. Buena comprensión.':p>=50?'Buen inicio. Repaso recomendado.':'La práctica hace al maestro.';}
+}
+function resetAll(){caseScore=0;decDone={};secs=1800;timerOn=false;clearInterval(timerInt);var el=document.getElementById('tmr');if(el){el.textContent='30:00';el.className='tval';}document.getElementById('tbtn').textContent='▶ INICIAR';}
+
+/* CONFETTI */
+function confetti(){var c2=['#f5c400','#2d8af0','#17a850','#f97316','#06b6d4','#8b5cf6','#e83030'];for(var i=0;i<22;i++){(function(i){setTimeout(function(){var c=document.createElement('div');c.className='cnf';c.style.cssText='left:'+(15+Math.random()*70)+'%;top:20%;background:'+c2[i%7]+';animation:cf '+(0.7+Math.random()*0.8)+'s ease forwards;animation-delay:'+(Math.random()*0.3)+'s';document.body.appendChild(c);setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},2500);},i*25);})(i);}}
+
+/* KEYBOARD */
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(cur+1);}
+  if(e.key==='ArrowLeft'){e.preventDefault();go(cur-1);}
+  if(e.key==='f'||e.key==='F')document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();
+  if(e.key==='Escape')closePopup();
+  var km={'a':0,'A':0,'b':1,'B':1,'c':2,'C':2,'d':3,'D':3};
+  if(km[e.key]!==undefined&&cur>=14&&cur<=19){var d=cur-14;if(!decDone[d]&&DECS[d].opts[km[e.key]])answerDec(d,DECS[d].opts[km[e.key]]);}
+});
+
+buildSlides();
+updateHUD();
+</script>
+</body>
+</html>
